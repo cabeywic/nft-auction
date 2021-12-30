@@ -44,11 +44,11 @@ contract Auction is IERC721Receiver, ERC165, ERC721Holder {
 
     // state
     bool public canceled;
+    bool public ownerHasDeposited;
     address payable public highestBidder;
     mapping(address => uint256) fundsByBidder;
     uint public highestBindingBid;
     bool ownerHasWithdrawn;
-    bool ownerHasDeposited;
 
     event LogBid(address indexed bidder, uint indexed bid, address indexed highestBidder, uint highestBindingBid);
     event LogWithdrawal(address indexed withdrawer, address indexed withdrawalAccount, uint indexed amount);
@@ -193,7 +193,7 @@ contract Auction is IERC721Receiver, ERC165, ERC721Holder {
         emit LogCanceled();
     }
 
-    function tokenURI() public view returns (string memory){
+    function tokenURI() public onlyDeposited view returns (string memory) {
         return erc721Contract.tokenURI(tokenId);
     }
 }

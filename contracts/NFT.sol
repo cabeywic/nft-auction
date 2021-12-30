@@ -12,7 +12,7 @@ contract NFT is ERC721, Ownable {
     constructor() ERC721("NFT", "CHK") {}
 
     function _baseURI() internal pure override returns (string memory) {
-        return "https://testnets.opensea.io/";
+        return "http://localhost:3000/api/token/";
     }
 
     function safeMint(address to) public onlyOwner {
