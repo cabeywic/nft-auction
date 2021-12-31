@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {AppBar, Toolbar, Typography, Button, Box, Stack} from '@mui/material';
+import { Link } from '../routes';
 
 const styles = {
     root: {
@@ -10,7 +11,7 @@ const styles = {
       marginRight: '10px',
     },
     title: {
-      flexGrow: 1,
+      flexGrow: 1
     },
 };
 
@@ -19,12 +20,12 @@ export default function Header() {
     <Box sx={styles.root}>
         <AppBar position="static" color="transparent">
             <Toolbar>
-            <Typography variant="h5" component="h1" sx={styles.title}>
-                Next Auctions
-            </Typography>
+              <Typography variant="h5" component="h1" sx={styles.title}>
+                  Next Auctions
+              </Typography>
                 <Stack spacing={2} direction="row">
                     <Button color="primary" variant="contained">Create NFT</Button>
-                    <Button color="primary" variant="contained">View Auctions</Button>
+                    <Link route="/"><Button color="primary" variant="contained">View Auctions</Button></Link>
                 </Stack>
             </Toolbar>
         </AppBar>

@@ -9,29 +9,36 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import IconButton from '@mui/material/IconButton';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
+import { Link } from '../routes';
 
 
-export default function AuctionCard() {
-    const price = 0.01;
-    const favourites = 16;
-    const views = 142;
-    const title = 'Neon Kabuki Warrior - Bat';
-    const imageUrl = "https://lh3.googleusercontent.com/Sv5pi_Isdu9e9iLscuHSuvz5jYVQD_7XHChUkg8rtsbPsPCfYP5KapCZTBmMvbn0xa16LQbFyitKonm3-1MB2xWDAyZrFZrlwH7_mA=w600";
-    const description = `1 out of 5 pieces from the Neon Kabuki Warrior Set
+export default function AuctionCard(props) {
 
-    Based on the work of Utagawa Kuniyoshi`;
+  const { 
+    favourites,
+    views,
+    title,
+    img,
+    description
+  } = props.auction;
+
+  const price = 0.01;
 
   return (
     <Card sx={{ maxWidth: 345, background: '#303339' }}>
-      <CardMedia
-        component="img"
-        image={imageUrl}
-      />
+      <Link route="/auctions/adf">
+        <a className="item">
+          <CardMedia
+            component="img"
+            image={img}
+          />
+        </a>
+      </Link>
       <CardContent>
         <Typography gutterBottom variant="h5" component="div">
             {title}
         </Typography>
-        <Typography variant="body2" color="primary.main">
+        <Typography variant="body2" color="primary.main" sx={{ minHeight: 65 }}>
             {description}
         </Typography>
       </CardContent>
