@@ -35,20 +35,20 @@ contract AuctionFactory {
 }
 
 contract Auction is IERC721Receiver, ERC165, ERC721Holder {
-    uint public startBlock;
-    uint public endBlock;
+    uint startBlock;
+    uint endBlock;
     address public owner;
-    uint public bidIncrement;
-    ERC721 public erc721Contract;
-    uint public tokenId;
+    uint bidIncrement;
+    ERC721 erc721Contract;
+    uint tokenId;
 
     // state
     bool public canceled;
-    bool public ownerHasDeposited;
     address payable public highestBidder;
     mapping(address => uint256) fundsByBidder;
     uint public highestBindingBid;
     bool ownerHasWithdrawn;
+    bool ownerHasDeposited;
 
     event LogBid(address indexed bidder, uint indexed bid, address indexed highestBidder, uint highestBindingBid);
     event LogWithdrawal(address indexed withdrawer, address indexed withdrawalAccount, uint indexed amount);
@@ -193,7 +193,24 @@ contract Auction is IERC721Receiver, ERC165, ERC721Holder {
         emit LogCanceled();
     }
 
-    function tokenURI() public onlyDeposited view returns (string memory) {
+    function tokenURI() public view returns (string memory) {
         return erc721Contract.tokenURI(tokenId);
+    }
+
+    function getSummary() public view returns(uint, uint, uint, uint, string memory, address, bool, address, address, uint, uint, bool){
+        return (
+            block.number,
+            startBlock,
+            endBlock,
+            tokenId,
+            tokenURI(),
+            address(erc721Contract),
+            ownerHasDeposited,
+            owner,
+            highestBidder,
+            highestBindingBid,
+            bidIncrement,
+            canceled
+        );
     }
 }
