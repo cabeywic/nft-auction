@@ -19,14 +19,20 @@ export default function AuctionCard(props) {
     views,
     title,
     img,
-    description
+    description,
+    tokenId,
+    ownerHasDeposited,
+    currentBlock,
+    startBlock, 
+    endBlock,
+    auctionAddress
   } = props.auction;
 
   const price = 0.01;
 
   return (
     <Card sx={{ maxWidth: 345, background: '#303339' }}>
-      <Link route="/auctions/adf">
+      <Link route={`/auctions/${auctionAddress}`}>
         <a className="item">
           <CardMedia
             component="img"

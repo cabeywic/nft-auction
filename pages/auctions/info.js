@@ -4,17 +4,46 @@ import { Typography, Grid, Box, Card, CardMedia, CardContent, Divider, Stack, Pa
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import AuctionBidTable from '../../src/Components/AuctionBidTable';
+import auction from '../../src/ethereum/auction';
 
 class AuctionInfo extends React.Component {
+    static async getInitialProps(props) {
+        let as = await auction(props.query.address).methods.getSummary().call();
+        const currentBlock = as[0];
+        const startBlock = as[1];
+        const endBlock = as[2];
+        const tokenId = as[3];
+        const tokenURI = as[4];
+        const erc721Contract = as[5];
+        const ownerHasDeposited = as[6];
+        const owner = as[7];
+        const highestBidder = as[8];
+        const highestBindingBid = as[9];
+        const bidIncrement = as[10];
+        const canceled = as[11];
+
+        let response = await fetch(tokenURI);
+        let metadata = await response.json();
+
+        let auctionInfo = { ...metadata, currentBlock, startBlock, endBlock, tokenId, ownerHasDeposited, owner, canceled, highestBindingBid }
+        return { auctionInfo }
+    }
+
   render() {
     const price = 0.01;
-    const favourites = 16;
-    const views = 142;
-    const title = 'Neon Kabuki Warrior - Bat';
-    const imageUrl = "https://lh3.googleusercontent.com/Sv5pi_Isdu9e9iLscuHSuvz5jYVQD_7XHChUkg8rtsbPsPCfYP5KapCZTBmMvbn0xa16LQbFyitKonm3-1MB2xWDAyZrFZrlwH7_mA=w600";
-    const description = `1 out of 5 pieces from the Neon Kabuki Warrior Set
 
-    Based on the work of Utagawa Kuniyoshi`;
+    const { 
+        favourites,
+        views,
+        title,
+        img,
+        description,
+        tokenId,
+        ownerHasDeposited,
+        currentBlock,
+        startBlock, 
+        endBlock
+      } = this.props.auctionInfo;
     
     return (
       <Layout maxWidth="sm">
@@ -24,7 +53,7 @@ class AuctionInfo extends React.Component {
                 <Card sx={{ backgroundColor: "#303339", marginBottom: 4 }}>
                     <CardMedia
                         component="img"
-                        image={imageUrl}
+                        image={img}
                         alt="green iguana"
                     />
                 </Card>
