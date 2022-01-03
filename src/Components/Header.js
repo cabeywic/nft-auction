@@ -24,7 +24,7 @@ export default function Header() {
                   Next Auctions
               </Typography>
                 <Stack spacing={2} direction="row">
-                    <Button color="primary" variant="contained">Create NFT</Button>
+                    <Link route="/auctions/new"><Button color="primary" variant="contained">Create Auction</Button></Link>
                     <Link route="/"><Button color="primary" variant="contained">View Auctions</Button></Link>
                 </Stack>
             </Toolbar>
