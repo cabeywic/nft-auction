@@ -22,21 +22,17 @@ contract AuctionFactory {
         return auctions;
     }
 
-     function createAuction(uint startBlock, uint endBlock, uint bidIncrement, uint tokenId) public {
-        Auction newAuction = new Auction(startBlock, endBlock, msg.sender, bidIncrement, erc721Contract, tokenId);
+     function createAuction(uint startTimestamp, uint endTimestamp, uint bidIncrement, uint tokenId) public {
+        Auction newAuction = new Auction(startTimestamp, endTimestamp, msg.sender, bidIncrement, erc721Contract, tokenId);
         auctions.push(address(newAuction));
 
         emit AuctionCreated(address(newAuction), msg.sender, auctions.length);
     }
-
-    function getCurrentBlock() public view returns(uint){
-        return block.number;
-    }
 }
 
 contract Auction is IERC721Receiver, ERC165, ERC721Holder {
-    uint startBlock;
-    uint endBlock;
+    uint startTimestamp;
+    uint endTimestamp;
     address public owner;
     uint bidIncrement;
     ERC721 erc721Contract;
@@ -56,12 +52,12 @@ contract Auction is IERC721Receiver, ERC165, ERC721Holder {
     event LogDeposit();
     event LogTransferOut(address indexed transferTo, uint indexed amount);
 
-    constructor(uint _startBlock, uint _endBlock, address _owner, uint _bidIncrement, address _erc721Contract, uint _tokenId) {
-        require(_startBlock < _endBlock, "Start block must be less than the end block");
-        require(_startBlock > block.number, "Start block  must be greater than the current block");
+    constructor(uint _startTimestamp, uint _endTimestamp, address _owner, uint _bidIncrement, address _erc721Contract, uint _tokenId) {
+        require(_startTimestamp < _endTimestamp, "Start block must be less than the end block");
+        require(_startTimestamp > block.timestamp, "Start block  must be greater than the current block");
 
-        startBlock = _startBlock;
-        endBlock = _endBlock;
+        startTimestamp = _startTimestamp;
+        endTimestamp = _endTimestamp;
         owner = _owner;
         bidIncrement = _bidIncrement;
         erc721Contract = ERC721(_erc721Contract);
@@ -81,12 +77,12 @@ contract Auction is IERC721Receiver, ERC165, ERC721Holder {
     }
 
     modifier onlyAfterStart {
-        require(block.number >= startBlock, "Auction has not started");
+        require(block.timestamp >= startTimestamp, "Auction has not started");
         _;
     }
 
     modifier onlyBeforeEnd {
-        require(block.number < endBlock, "Auction has ended");
+        require(block.timestamp < endTimestamp, "Auction has ended");
         _;
     }
 
@@ -96,7 +92,7 @@ contract Auction is IERC721Receiver, ERC165, ERC721Holder {
     }
 
     modifier onlyEndedOrCanceled {
-        require(block.number > endBlock && !canceled, "Auction has not ended or been canceled");
+        require(block.timestamp > endTimestamp && !canceled, "Auction has not ended or been canceled");
         _;
     }
 
@@ -199,9 +195,9 @@ contract Auction is IERC721Receiver, ERC165, ERC721Holder {
 
     function getSummary() public view returns(uint, uint, uint, uint, string memory, address, bool, address, address, uint, uint, bool){
         return (
-            block.number,
-            startBlock,
-            endBlock,
+            block.timestamp,
+            startTimestamp,
+            endTimestamp,
             tokenId,
             tokenURI(),
             address(erc721Contract),
