@@ -18,8 +18,12 @@
  *
  */
 
-// const HDWalletProvider = require('@truffle/hdwallet-provider');
-//
+const HDWalletProvider = require('@truffle/hdwallet-provider');
+require('dotenv').config({ path: '.env.local' });
+
+const mnemonic = process.env.MNEMONIC;
+const endpoint = process.env.ENDPOINT;
+
 // const fs = require('fs');
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
 
@@ -71,6 +75,14 @@ module.exports = {
     // network_id: 2111,   // This network is yours, in the cloud.
     // production: true    // Treats this network as if it was a public net. (default: false)
     // }
+    rinkeby: {
+      provider: function() { 
+        return new HDWalletProvider(mnemonic, endpoint);
+      },
+      network_id: 4,
+      gas: 4500000,
+      gasPrice: 10000000000,
+    }
   },
 
   // Set default mocha options here, use special reporters etc.

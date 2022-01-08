@@ -9,42 +9,43 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 pragma solidity ^0.8.1;
 
 contract AuctionFactory {
-    event AuctionCreated(address indexed auctionContract, address indexed owner, uint numAuctions); 
+    event AuctionCreated(address indexed auctionContract, address indexed owner, uint numAuctions, uint token); 
 
     address[] public auctions;
-    address erc721Contract;
+    address erc721ContractAddress;
 
-    constructor(address _erc721Contract) {
-        erc721Contract = _erc721Contract;
+    constructor(address _erc721ContractAddress) {
+        erc721ContractAddress = _erc721ContractAddress;
     }
 
     function getAuctions() public view returns(address[] memory){
-        return auctions;
+        return auctions; 
     }
 
-     function createAuction(uint startBlock, uint endBlock, uint bidIncrement, uint tokenId) public {
-        Auction newAuction = new Auction(startBlock, endBlock, msg.sender, bidIncrement, erc721Contract, tokenId);
+     function createAuction(uint startTimestamp, uint endTimestamp, uint bidIncrement, uint tokenId) public {
+        Auction newAuction = new Auction(startTimestamp, endTimestamp, msg.sender, bidIncrement, erc721ContractAddress, tokenId);
         auctions.push(address(newAuction));
+        ERC721 erc721 = ERC721(erc721ContractAddress);
 
-        emit AuctionCreated(address(newAuction), msg.sender, auctions.length);
-    }
+        // Deposit the NFT on auction create
+        require(erc721.ownerOf(tokenId) == msg.sender, "Caller must own the NFT token");
+        require(erc721.getApproved(tokenId)  == address(this), "Must approve contract as operator");
 
-    function getCurrentBlock() public view returns(uint){
-        return block.number;
+        erc721.safeTransferFrom(msg.sender, address(newAuction), tokenId);
+        emit AuctionCreated(address(newAuction), msg.sender, auctions.length, tokenId);
     }
 }
 
 contract Auction is IERC721Receiver, ERC165, ERC721Holder {
-    uint public startBlock;
-    uint public endBlock;
+    uint startTimestamp;
+    uint endTimestamp;
     address public owner;
-    uint public bidIncrement;
-    ERC721 public erc721Contract;
-    uint public tokenId;
+    uint bidIncrement;
+    ERC721 erc721Contract;
+    uint tokenId;
 
     // state
     bool public canceled;
-    bool public ownerHasDeposited;
     address payable public highestBidder;
     mapping(address => uint256) fundsByBidder;
     uint public highestBindingBid;
@@ -53,15 +54,14 @@ contract Auction is IERC721Receiver, ERC165, ERC721Holder {
     event LogBid(address indexed bidder, uint indexed bid, address indexed highestBidder, uint highestBindingBid);
     event LogWithdrawal(address indexed withdrawer, address indexed withdrawalAccount, uint indexed amount);
     event LogCanceled();
-    event LogDeposit();
     event LogTransferOut(address indexed transferTo, uint indexed amount);
 
-    constructor(uint _startBlock, uint _endBlock, address _owner, uint _bidIncrement, address _erc721Contract, uint _tokenId) {
-        require(_startBlock < _endBlock, "Start block must be less than the end block");
-        require(_startBlock > block.number, "Start block  must be greater than the current block");
+    constructor(uint _startTimestamp, uint _endTimestamp, address _owner, uint _bidIncrement, address _erc721Contract, uint _tokenId) {
+        require(_startTimestamp < _endTimestamp, "Start block must be less than the end block");
+        require(_startTimestamp > block.timestamp, "Start block  must be greater than the current block");
 
-        startBlock = _startBlock;
-        endBlock = _endBlock;
+        startTimestamp = _startTimestamp;
+        endTimestamp = _endTimestamp;
         owner = _owner;
         bidIncrement = _bidIncrement;
         erc721Contract = ERC721(_erc721Contract);
@@ -81,12 +81,12 @@ contract Auction is IERC721Receiver, ERC165, ERC721Holder {
     }
 
     modifier onlyAfterStart {
-        require(block.number >= startBlock, "Auction has not started");
+        require(block.timestamp >= startTimestamp, "Auction has not started");
         _;
     }
 
     modifier onlyBeforeEnd {
-        require(block.number < endBlock, "Auction has ended");
+        require(block.timestamp < endTimestamp, "Auction has ended");
         _;
     }
 
@@ -96,36 +96,16 @@ contract Auction is IERC721Receiver, ERC165, ERC721Holder {
     }
 
     modifier onlyEndedOrCanceled {
-        require(block.number > endBlock && !canceled, "Auction has not ended or been canceled");
-        _;
-    }
-
-    modifier onlyDeposited {
-        require(ownerHasDeposited, "Owner has not deposited NFT");
-        _;
-    }
-
-    modifier onlyNotDeposited {
-        require(!ownerHasDeposited, "Owner has deposited NFT");
+        require(block.timestamp > endTimestamp && !canceled, "Auction has not ended or been canceled");
         _;
     }
 
     function min(uint256 a, uint256 b) internal pure returns (uint256) {
         return a < b ? a : b;
     }
-
-    function deposit() public onlyOwner onlyNotDeposited onlyBeforeEnd onlyNotCanceled {
-        // Transfer ownership of NFT to contract
-        require(erc721Contract.ownerOf(tokenId) == msg.sender, "Caller must own the NFT token");
-        require(erc721Contract.getApproved(tokenId)  == address(this), "Must approve contract as operator");
-
-        erc721Contract.safeTransferFrom(msg.sender, address(this), tokenId);
-        ownerHasDeposited = true;
-        emit LogDeposit();
-    }
     
 
-    function placeBid() public payable onlyNotOwner onlyAfterStart onlyBeforeEnd onlyNotCanceled onlyDeposited{
+    function placeBid() public payable onlyNotOwner onlyAfterStart onlyBeforeEnd onlyNotCanceled{
         require(msg.value > 0, "Bids must be greater than 0");
 
         uint newBid = fundsByBidder[msg.sender] + msg.value;
@@ -188,12 +168,28 @@ contract Auction is IERC721Receiver, ERC165, ERC721Holder {
 
     function cancel() public onlyOwner onlyNotCanceled onlyBeforeEnd {
         canceled = true;
-        if(ownerHasDeposited) erc721Contract.safeTransferFrom(address(this), owner, tokenId);
+        erc721Contract.safeTransferFrom(address(this), owner, tokenId);
 
         emit LogCanceled();
     }
 
-    function tokenURI() public onlyDeposited view returns (string memory) {
+    function tokenURI() public view returns (string memory) {
         return erc721Contract.tokenURI(tokenId);
+    }
+
+    function getSummary() public view returns(uint, uint, uint, uint, string memory, address, address, address, uint, uint, bool){
+        return (
+            block.timestamp,
+            startTimestamp,
+            endTimestamp,
+            tokenId,
+            tokenURI(),
+            address(erc721Contract),
+            owner,
+            highestBidder,
+            highestBindingBid,
+            bidIncrement,
+            canceled
+        );
     }
 }
