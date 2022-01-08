@@ -2,8 +2,6 @@ import * as React from 'react';
 import Layout from '../src/Components/Layout';
 import { Typography, Grid, Box, Paper } from '@mui/material';
 import AuctionCard from '../src/Components/AuctionCard'
-import { styled } from '@mui/material/styles';
-import Link from '../src/Link';
 import factory from '../src/ethereum/factory';
 import auction from '../src/ethereum/auction';
 
@@ -15,20 +13,19 @@ class Index extends React.Component {
     let auctions = await Promise.all(
       auctionAddresses.map(async (auctionAddress) => {
         let as = await auction(auctionAddress).methods.getSummary().call();
-        const currentBlock = as[0];
-        const startBlock = as[1];
-        const endBlock = as[2];
+        const currentTimestamp = as[0];
+        const startTimestamp = as[1];
+        const endTimestamp = as[2];
         const tokenId = as[3];
         const tokenURI = as[4];
         const erc721Contract = as[5];
-        const ownerHasDeposited = as[6];
-        const owner = as[7];
-        const highestBidder = as[8];
-        const highestBindingBid = as[9];
-        const bidIncrement = as[10];
-        const canceled = as[11];
+        const owner = as[6];
+        const highestBidder = as[7];
+        const highestBindingBid = as[8];
+        const bidIncrement = as[9];
+        const canceled = as[10];
 
-        auctionSummary.push({ currentBlock, startBlock, endBlock, tokenId, ownerHasDeposited, owner, canceled, highestBindingBid, auctionAddress })
+        auctionSummary.push({ currentTimestamp, startTimestamp, endTimestamp, tokenId, owner, canceled, highestBindingBid, auctionAddress })
 
         let response = await fetch(tokenURI);
         return await response.json();
