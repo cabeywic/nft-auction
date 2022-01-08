@@ -7,20 +7,33 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
+import web3 from '../ethereum/web3';
 
-function createData(name, calories, fat, carbs, protein) {
-  return { name, calories, fat, carbs, protein: <Button>View</Button> };
+function createData(bidder, bid, highestBidder, highestBindingBid) {
+  return { bidder, bid, highestBidder, highestBindingBid, viewButton: <Button>View</Button> };
 }
 
-const rows = [
-  createData('Makrov', 159, 6.0, 24, 4.0),
-  createData('Ghost', 237, 9.0, 37, 4.3),
-  createData('Makrov', 262, 16.0, 24, 6.0),
-  createData('Ghost', 305, 3.7, 67, 4.3),
-  createData('Gingerbread', 356, 16.0, 49, 3.9),
-];
+function textEllipsis(str, maxLength = 10, { side = "end", ellipsis = "..." } = {}) {
+  if (str.length > maxLength) {
+    switch (side) {
+      case "start":
+        return ellipsis + str.slice(-(maxLength - ellipsis.length));
+      case "end":
+      default:
+        return str.slice(0, maxLength - ellipsis.length) + ellipsis;
+    }
+  }
+  return str;
+}
 
-export default function BasicTable() {
+export default function AuctionBidTable(props) {
+  let rows = []
+
+  for(let row of props.bids){
+    const { bidder, bid, highestBidder, highestBindingBid } = row.returnValues;
+    rows.push(createData(bidder, bid, highestBidder, highestBindingBid))
+  }
+  
   return (
     <TableContainer component={Paper}  sx={{ backgroundColor: "#303339", my: 2 }}>
       <Table stickyHeader sx={{ minWidth: 650 }} aria-label="auction bid table">
@@ -28,24 +41,24 @@ export default function BasicTable() {
           <TableRow>
             <TableCell>Bidder</TableCell>
             <TableCell align="right">Bid</TableCell>
-            <TableCell align="right">Highest Bidder</TableCell>
+            <TableCell align="left">Highest Bidder</TableCell>
             <TableCell align="right">Highest Binding Bid</TableCell>
             <TableCell align="right"></TableCell>
           </TableRow>
         </TableHead>
         <TableBody sx={{ color: "black" }}>
-          {rows.map((row) => (
+          {rows.map((row, i) => (
             <TableRow
-              key={row.name}
+              key={i}
               sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
             >
               <TableCell component="th" scope="row">
-                {row.name}
+                {textEllipsis(row.bidder)}
               </TableCell>
-              <TableCell align="right">{row.calories}</TableCell>
-              <TableCell align="right">{row.fat}</TableCell>
-              <TableCell align="right">{row.carbs}</TableCell>
-              <TableCell align="right">{row.protein}</TableCell>
+              <TableCell align="right">{web3.utils.fromWei(row.bid, 'ether')} ETH</TableCell>
+              <TableCell align="left">{textEllipsis(row.highestBidder)}</TableCell>
+              <TableCell align="right">{web3.utils.fromWei(row.highestBindingBid, 'ether')} ETH</TableCell>
+              <TableCell align="right">{row.viewButton}</TableCell>
             </TableRow>
           ))}
         </TableBody>
